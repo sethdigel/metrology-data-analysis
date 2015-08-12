@@ -2,6 +2,10 @@ import numpy as np
 import scipy.optimize
 
 class XyzPlane(object):
+    """
+    Function object class to represent a plane as a function 
+    of x, y coordinates, where z = a*x + b*y + c.
+    """
     def __init__(self, a, b, c):
         self.pars = a, b, c
     def __call__(self, positions):
@@ -9,10 +13,15 @@ class XyzPlane(object):
         return np.array([a*x + b*y + c for x, y in positions])
 
 def xyz_plane(positions, a, b, c):
+    "Function wrapping XyzPlane for passing to scipy.optimize.curve_fit"
     my_plane = XyzPlane(a, b, c)
     return my_plane(positions)
 
 class PointCloud(object):
+    """
+    Abstraction for x, y, z points representing a metrology scan of a 
+    surface.
+    """
     def __init__(self, x, y, z):
         self.x = np.array(x)
         self.y = np.array(y)
@@ -31,8 +40,9 @@ class PointCloud(object):
         return result
     def xyzPlane_fit(self, nsigma=3, p0=(0, 0, 0)):
         """
-        Fit a plane to the xyz data, clipping the initial fit at the 
-        nsigma level to remove outlier points.
+        Fit a plane to the xyz data, clipping the initial fit at the
+        nsigma level to remove outlier points.  Return an XyzPlane
+        functor set to the fit parameters.
         """
         positions = np.array(zip(self.x, self.y))
         
@@ -50,14 +60,20 @@ class PointCloud(object):
         return XyzPlane(*pars)
 
 class MetrologyData(object):
+    """
+    Base class for metrology data.
+    """
     def __init__(self, infile):
         self.infile = infile
-    def sensor_data(self):
-        raise NotImplementedError('Subclass has not implemented this function.')
     def plot_statistics(self, plane_functor, plane_data=None, 
                         nsigma=4, title=None, zoffset=0):
+        """
+        Plot summary statistics of z-value residuals relative to the 
+        provided XyzPlane functor.  The sensor data are used if
+        plane_data is None.
+        """
         if plane_data is None:
-            pos, z = self.sensor_data()
+            pos, z = self.sensor.data()
         else:
             pos, z = plane_data
         dz = z - plane_functor(pos) + zoffset
@@ -79,9 +95,12 @@ class MetrologyData(object):
         return win0, dz
 
 class OgpData(MetrologyData):
+    """
+    Abstraction for single sensor metrology scan, including gauge
+    block data, using the OGP machine at BNL.
+    """
     def __init__(self, infile):
         super(OgpData, self).__init__(infile)
-        self.infile = infile
         self._read_data()
     def _read_data(self):
         # Read the "Contour" data blocks into a local dict, convert
@@ -120,11 +139,11 @@ class OgpData(MetrologyData):
         # Unpack a line and convert z values from mm to microns.
         data = [float(x) for x in line.split()[:3]]
         return data[0], data[1], 1e3*data[2]
-    def sensor_data(self):
-        return self.sensor.data()
     def sensorPlane_fit(self, nsigma=3, p0=(0, 0, 0)):
+        "Return XyzPlane functor fit to the sensor data."
         return self.sensor.xyzPlane_fit(nsigma=nsigma, p0=p0)
     def refPlane_fit(self, nsigma=3, p0=(0, 0, 0)):
+        "Return XyzPlane functor fit to the gauge block data."
         return self.reference.xyzPlane_fit(nsigma=nsigma, p0=p0)
 
 if __name__ == '__main__':
