@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.optimize
+import pylab_plotter as plot
+plot.pylab.ion()
 
 class XyzPlane(object):
     """
@@ -65,6 +67,7 @@ class MetrologyData(object):
     """
     def __init__(self, infile):
         self.infile = infile
+        self._read_data()
     def plot_statistics(self, plane_functor, plane_data=None, 
                         nsigma=4, title=None, zoffset=0):
         """
@@ -101,7 +104,6 @@ class OgpData(MetrologyData):
     """
     def __init__(self, infile):
         super(OgpData, self).__init__(infile)
-        self._read_data()
     def _read_data(self):
         # Read the "Contour" data blocks into a local dict, convert
         # each to a PointCloud object, sort by mean y-value, and
@@ -146,10 +148,21 @@ class OgpData(MetrologyData):
         "Return XyzPlane functor fit to the gauge block data."
         return self.reference.xyzPlane_fit(nsigma=nsigma, p0=p0)
 
-if __name__ == '__main__':
-    import pylab_plotter as plot
-    plot.pylab.ion()
+class ItlData(MetrologyData):
+    def __init__(self, infile):
+        super(ItlData, self).__init__(infile)
+    def _read_data(self):
+        # The ITL metrology data just comprises x, y, z points scanned
+        # over the sensor. The piston and tilt relative to the 13mm
+        # ZNOM has presumably been subtracted off.
+        data = dict([(key, []) for key in 'XYZ'])
+        for line in open(self.infile):
+            if line.startswith('ImagePoint'):
+                tokens = line.split()
+                data[tokens[1]].append(float(tokens[3]))
+        self.sensor = PointCloud(data['X'], data['Y'], 1e3*np.array(data['Z']))
 
+if __name__ == '__main__':
     infile = '112-05_150811a.DAT'
     ogpData = OgpData(infile)
 
@@ -158,7 +171,7 @@ if __name__ == '__main__':
     #
     refPlane = ogpData.refPlane_fit()
     ogpData.plot_statistics(refPlane, plane_data=ogpData.reference.data(),
-                         title='Reference plane residuals, %s' % infile)
+                            title='Reference plane residuals, %s' % infile)
     plot.save('refplane_stats_%s.png' % infile.split('.DAT')[0])
 
     #
