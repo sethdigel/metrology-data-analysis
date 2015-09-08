@@ -79,8 +79,45 @@ class MetrologyData(object):
         pos, z = self.sensor.data()
         self.resids = z - plane_functor(pos) + zoffset
 
-    def point_cloud_plot(self, elev=10, azim=30, title=None, 
-                         sensor_color='r', ref_color='b', refpoint_color='b'):
+    def flatness_plot(self, elev=10, azim=30, title=None,
+                      sensor_color='r', ref_color='b'):
+        win = plot.Window()
+        ax = Axes3D(win.fig)
+
+        ax.scatter(self.sensor.x, self.sensor.y, self.resids, c=sensor_color)
+
+        x = np.linspace(min(self.sensor.x), max(self.sensor.x), 100)
+        y = np.linspace(min(self.sensor.y), max(self.sensor.y), 100)
+
+        xx, yy, zz = [], [], []
+        for xval in x:
+            for yval in y:
+                xx.append(xval)
+                yy.append(yval)
+                zz.append(0)
+
+        xx = np.array(xx).reshape(len(y), len(x))
+        yy = np.array(yy).reshape(len(y), len(x))
+        zz = np.array(zz).reshape(len(y), len(x))
+
+        ax.plot_wireframe(xx, yy, zz, rstride=5, cstride=5)
+
+        index = np.where(self.resids > 0)
+        ax.scatter(self.sensor.x[index], self.sensor.y[index],
+                   self.resids[index], c=sensor_color)
+
+        plot.pylab.xlabel('x (mm)')
+        plot.pylab.ylabel('y (mm)')
+        ax.set_zlabel('z (micron)')
+        ax.view_init(elev=elev, azim=azim)
+        if title is None:
+            title = self.infile
+        ax.set_title(title)
+        return win, ax
+
+    def absolute_height_plot(self, elev=10, azim=30, title=None,
+                             sensor_color='r', ref_color='b',
+                             refpoint_color='b'):
         win = plot.Window()
         ax = Axes3D(win.fig)
         ax.scatter(self.sensor.x, self.sensor.y, self.sensor.z,
@@ -103,6 +140,11 @@ class MetrologyData(object):
         zz = np.array(zz).reshape(len(y), len(x))
 
         ax.plot_wireframe(xx, yy, zz, rstride=5, cstride=5)
+
+        index = np.where(self.resids > 0)
+        ax.scatter(self.sensor.x[index], self.sensor.y[index],
+                   self.sensor.z[index], c=sensor_color)
+
         plot.pylab.xlabel('x (mm)')
         plot.pylab.ylabel('y (mm)')
         ax.set_zlabel('z (micron)')
