@@ -285,6 +285,10 @@ class ItlData(MetrologyData):
         for line in open(self.infile):
             if line.startswith('ImagePoint'):
                 tokens = line.split()
+                if len(tokens) > 5:
+                    # Omit this line since it is part of the scan
+                    # summary data and not a scan point.
+                    continue
                 data[tokens[1]].append(float(tokens[3]))
         self.sensor = PointCloud(data['X'], data['Y'], data['Z'])
         # Convert z from mm to micron
