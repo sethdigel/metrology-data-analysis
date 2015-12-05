@@ -122,11 +122,18 @@ class MetrologyData(object):
         ax = Axes3D(win.fig)
         ax.scatter(self.sensor.x, self.sensor.y, self.sensor.z,
                    c=sensor_color)
-        ax.scatter(self.reference.x, self.reference.y, self.reference.z,
-                   c=refpoint_color)
+        try:
+            ax.scatter(self.reference.x, self.reference.y, self.reference.z,
+                       c=refpoint_color)
+            y = np.linspace(min(self.reference.y), max(self.reference.y), 100)
+        except AttributeError:
+            # Vendor data may not have data from the reference plane
+            # scans, so there are not reference points to plot.
+            #
+            # Use the sensor points to set the grid points in y.
+            y = np.linspace(min(self.sensor.y), max(self.sensor.y), 100)
 
         x = np.linspace(min(self.sensor.x), max(self.sensor.x), 100)
-        y = np.linspace(min(self.reference.y), max(self.reference.y), 100)
 
         xx, yy, zz = [], [], []
         for xval in x:
