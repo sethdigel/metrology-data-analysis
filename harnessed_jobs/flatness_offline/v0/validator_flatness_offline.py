@@ -11,5 +11,7 @@ results = [lcatr.schema.fileref.make(x) for x in png_files]
 txt_files = glob.glob('%(sensor_id)s_flatness*.txt'% locals())
 results.extend([lcatr.schema.fileref.make(x) for x in txt_files])
 
+results.append(siteUtils.packageVersions())
+
 lcatr.schema.write_file(results)
 lcatr.schema.validate_file()
