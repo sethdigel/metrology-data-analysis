@@ -1,0 +1,35 @@
+%YAML 1.1
+---
+
+Name: metrology_offline
+ShortDescription: Offline single sensor metrology analysis
+Description: This traveler will execute an offline mechanical metrology analysis of single sensor data.  The data may be from either vendor, and the data files must be indexed in the Data Catalog and reside in a disk area which is directly accessible to the computer on which these harnessed jobs will be run.<br><br><b>By clicking "Start Work" you indicate you</b><ul><li>are permitted to exercise this traveler,</li><li>previewed and understand all steps beforehand,</li><li>will fulfill all prerequisites, as presented, </li><li>will follow all instructions, as presented, and,</li><li>ensure due diligence is used at each step.</li>
+HardwareGroup: Generic-CCD
+Prerequisites:
+  - {Name: metrology_offline - Equipment needed, Description: 'None. <b>Read the Header information before clicking Start Work.</b>', Quantity: '1',
+     PrerequisiteType: TEST_EQUIPMENT}
+  - {Name: metrology_offline - Cautions, Description: 'None', Quantity: '1',
+     PrerequisiteType: TEST_EQUIPMENT}
+Version: next
+Sequence:
+  -
+    Name: metrology_analysis
+    Version: next
+    ShortDescription: Single sensor z-direction metrology analysis.
+    TravelerActions:
+      - Automatable
+    Sequence:
+      -
+        Name: flatness_offline
+        ShortDescription: Flatness analysis
+        UserVersionString: v0
+        Version: next
+        TravelerActions:
+          - HarnessedJob
+      -
+        Name: absolute_height_offline
+        ShortDescription: Absolute height analysis
+        UserVersionString: v0
+        Version: next
+        TravelerActions:
+          - HarnessedJob
