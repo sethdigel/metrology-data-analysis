@@ -2,7 +2,7 @@ import numpy as np
 import MetrologyData as metData
 from MetrologyData import md_factory
 
-def flatnessTask(sensor_id, infile, dtype='OGP'):
+def flatnessTask(sensor_id, infile, dtype='OGP', pickle_file=None):
     sensorData = md_factory.create(infile, dtype=dtype)
     #
     # Fit and set the reference plane to the LSF to the sensor surface
@@ -36,3 +36,6 @@ def flatnessTask(sensor_id, infile, dtype='OGP'):
         sensorData.flatness_plot(azim=azim)
         metData.plot.save('%s_flatness_residuals_point_cloud_azim_%i.png' 
                           % (sensor_id, azim))
+
+    if pickle_file is not None:
+        sensorData.persist(pickle_file)

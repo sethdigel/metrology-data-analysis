@@ -17,4 +17,5 @@ patterns = dict(e2v='*CT100*.csv', ITL='*.txt')
 met_file = metUtils.get_met_scan_data(sensor_id, patterns[ccd_vendor],
                                       sort=True)[-1]
 
-flatnessTask(sensor_id, met_file, dtype=ccd_vendor)
+flatnessTask(sensor_id, met_file, dtype=ccd_vendor,
+             pickle_file='flatness.pickle')

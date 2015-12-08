@@ -22,4 +22,5 @@ patterns = dict(e2v='*CT100*.csv', ITL='*.txt')
 met_file = metUtils.get_met_scan_data(sensor_id, patterns[ccd_vendor],
                                       sort=True)[-1]
 
-absoluteHeightTask(sensor_id, met_file, dtype=ccd_vendor)
+absoluteHeightTask(sensor_id, met_file, dtype=ccd_vendor,
+                   pickle_file='abs_height.pickle')

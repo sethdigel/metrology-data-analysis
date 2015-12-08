@@ -1,4 +1,5 @@
 import sys
+import pickle
 import numpy as np
 import scipy.optimize
 from mpl_toolkits.mplot3d import Axes3D
@@ -164,6 +165,7 @@ class MetrologyData(object):
     def quantile_table(self, outfile=None,
                        quantiles=(1, 0.995, 0.990, 0.975, 0.75, 0.5,
                                   0.25, 0.025, 0.01, 0.005, 0)):
+        self.quantiles = {}
         if self.resids is None:
             raise RuntimeError("Reference plane not set")
         if outfile is None:
@@ -176,6 +178,7 @@ class MetrologyData(object):
         for quantile in quantiles:
             index = min(int(npts*quantile), npts-1)
             output.write( ' %.3f   %12.6f\n' % (quantile, sorted_resids[index]))
+            self.quantiles['%.3f' % quantile] = sorted_resids[index]
         if outfile is not None:
             output.close()
 
@@ -225,6 +228,11 @@ class MetrologyData(object):
         win.set_title(title)
         return win
 
+    def persist(self, outfile):
+        output = open(outfile, 'w')
+        pickle.dump(self, output)
+        output.close()
+
 class OgpData(MetrologyData):
     """
     Abstraction for single sensor metrology scan, including gauge
@@ -272,14 +280,6 @@ class OgpData(MetrologyData):
         data = [float(x) for x in line.split()[:3]]
         return data[0], data[1], 1e3*data[2]
 
-    def sensorPlane_fit(self, nsigma=3, p0=(0, 0, 0)):
-        "Return XyzPlane functor fit to the sensor data."
-        return self.sensor.xyzPlane_fit(nsigma=nsigma, p0=p0)
-
-    def refPlane_fit(self, nsigma=3, p0=(0, 0, 0)):
-        "Return XyzPlane functor fit to the gauge block data."
-        return self.reference.xyzPlane_fit(nsigma=nsigma, p0=p0)
-
 class ItlData(MetrologyData):
     def __init__(self, infile):
         super(ItlData, self).__init__(infile)
@@ -318,9 +318,8 @@ class E2vData(MetrologyData):
         self.sensor.y /= 1e3
 
 class MetrologyDataFactory(object):
-    _prototypes = dict([(dtype, metDataClass) for dtype, metDataClass in 
-                        zip('OGP ITL e2v'.split(),
-                            (OgpData, ItlData, E2vData))])
+    _prototypes = dict(OGP=OgpData, ITL=ItlData, e2v=E2vData)
+
     def __init__(self):
         pass
 
@@ -329,5 +328,9 @@ class MetrologyDataFactory(object):
             return self._prototypes[dtype](infile)
         except KeyError:
             raise RuntimeError("Unrecognized metrology data type: " + dtype)
+
+    def load(self, pickle_file):
+        "Unpersist a MetrologyData object from a pickle file."
+        return pickle.load(open(pickle_file))
 
 md_factory = MetrologyDataFactory()
