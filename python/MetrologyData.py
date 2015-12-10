@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import scipy.optimize
 from mpl_toolkits.mplot3d import Axes3D
-import pylab_plotter as plot
+import lsst.eotest.sensor.pylab_plotter as plot
 
 class XyzPlane(object):
     """
